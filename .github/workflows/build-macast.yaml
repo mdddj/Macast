@@ -8,6 +8,12 @@ on:
       - morelog
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Publish artifacts to GitHub Releases after a successful build
+        required: false
+        default: false
+        type: boolean
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -225,3 +231,44 @@ jobs:
           name: ${{ env.DIST_DMG }}
           path: ${{ env.DIST_DMG }}
           if-no-files-found: error
+
+  release:
+    name: release
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(cat macast/.version)
+          TAG="v${VERSION}"
+          TITLE="Macast ${TAG}"
+
+          ls -lah artifacts
+
+          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${TAG}" artifacts/* --clobber --repo "${GITHUB_REPOSITORY}"
+            gh release edit "${TAG}" --title "${TITLE}" --notes "This release is built by GitHub Actions." --repo "${GITHUB_REPOSITORY}"
+          else
+            gh release create "${TAG}" artifacts/* \
+              --title "${TITLE}" \
+              --notes "This release is built by GitHub Actions." \
+              --repo "${GITHUB_REPOSITORY}"
+          fi
