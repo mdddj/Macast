@@ -352,8 +352,8 @@ class Macast(App):
         self.service.run_async()
 
     def check_update(self, verbose=True):
-        release_url = 'https://github.com/xfangfang/Macast/releases/latest'
-        api_url = 'https://api.github.com/repos/xfangfang/Macast/releases/latest'
+        release_url = 'https://github.com/mdddj/Macast/releases/latest'
+        api_url = 'https://api.github.com/repos/mdddj/Macast/releases/latest'
         try:
             response = requests.get(api_url, timeout=GITHUB_API_TIMEOUT)
             response.raise_for_status()
