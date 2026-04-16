@@ -29,19 +29,20 @@ A menu bar application using mpv as **DLNA Media Renderer**. You can push videos
 - ### Package manager
 
   ```shell
+  # Python 3.10+
   pip install macast
   macast-gui # or macast-cli
   ```
 
   Please see our wiki for more information(like **aur** support): [#package-manager](https://github.com/xfangfang/Macast/wiki/Installation#package-manager)  
-  Linux users may have problems installing using pip. Two additional libraries that I have modified need to be installed:
+  Linux users should use the PyPI packages first. If your tray icon is missing, try:
 
   ```shell
-  pip install git+https://github.com/xfangfang/pystray.git
-  pip install git+https://github.com/xfangfang/pyperclip.git
+  export PYSTRAY_BACKEND=gtk
+  macast-gui
   ```
 
-  **See [this](https://github.com/xfangfang/Macast/wiki/Installation#linux) for Linux compatibility**
+  Some Linux desktop environments also require `python3-gi`.
 
 - ### Build from source
 
@@ -67,6 +68,11 @@ Fell free to submit a pull request to [Macast-plugins](https://github.com/xfangf
 ## FAQ
 If you have any questions about this application, please check: [Macast/wiki/FAQ](https://github.com/xfangfang/Macast/wiki/FAQ).  
 If this does not solve your problem, please open a new issue to notify us, we are willing to help you solve the problem.
+
+## Maintenance Notes
+
+- The latest upstream release is [v0.7 from January 13, 2022](https://github.com/xfangfang/Macast/releases/tag/v0.7).
+- This fork raises the runtime baseline to Python 3.10 so current upstream dependencies can still be installed safely in 2026.
 
 ## Screenshots
 

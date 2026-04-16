@@ -406,7 +406,7 @@
                 let url = '/api?query=plugin-info'
                 return this.$http.get(url).then(res => {
                     console.log(res.data)
-                    this.macast_version = res.data.macast_version;
+                    this.macast_version = res.data.version;
                     this.platform = res.data.platform;
                     this.local_plugins = res.data.plugins;
                     this.plugins = []
@@ -499,6 +499,29 @@
                     loading.close();
                 })
             },
+            normalizeVersion(version) {
+                const matches = String(version || '0').match(/\d+/g);
+                if (!matches) {
+                    return [0];
+                }
+                return matches.map((part) => parseInt(part, 10));
+            },
+            compareVersions(a, b) {
+                const left = this.normalizeVersion(a);
+                const right = this.normalizeVersion(b);
+                const size = Math.max(left.length, right.length);
+                for (let index = 0; index < size; index += 1) {
+                    const leftPart = left[index] || 0;
+                    const rightPart = right[index] || 0;
+                    if (leftPart < rightPart) {
+                        return -1;
+                    }
+                    if (leftPart > rightPart) {
+                        return 1;
+                    }
+                }
+                return 0;
+            },
             update_plugins() {
                 this.plugins = [];
                 for (let p of this.local_plugins) {
@@ -506,8 +529,8 @@
                         title: p.title,
                         platform: p.platform, //插件适配的操作系统
                         available: p.platform.indexOf(this.platform) !== -1, // 是否适配当前系统
-                        local_version: parseFloat(p.version), // 本地版本号
-                        repo_version: 0, // 线上版本号
+                        local_version: p.version || '0', // 本地版本号
+                        repo_version: '0', // 线上版本号
                         version_tag: `v${p.version}`,
                         version_tag_type: 'success',
                         author: p.author,
@@ -530,14 +553,14 @@
                             l.protocol === p.protocol && l.type === 'protocol') {
                             // 本地插件拥有对应的在线插件
                             have_local = true
-                            l['repo_version'] = parseFloat(p.version)
+                            l['repo_version'] = p.version || '0'
                             l['desc'] = p.desc
-                            l['need_update'] = l.local_version < l.repo_version
+                            l['need_update'] = this.compareVersions(l.local_version, l.repo_version) < 0
                             l['url'] = p.url
                             if (l['need_update']) {
                                 l['version_tag'] += ` => ${p.version}`
                                 l['version_tag_type'] = 'warning'
-                            } else if (l.local_version !== l.repo_version) {
+                            } else if (this.compareVersions(l.local_version, l.repo_version) !== 0) {
                                 l['version_tag'] = `v${l.local_version} / v${l.repo_version}`
                             }
                         }
@@ -548,8 +571,8 @@
                             title: p.title,
                             platform: p.platform, //插件适配的操作系统
                             available: p.platform.indexOf(this.platform) !== -1, // 是否适配当前系统
-                            local_version: 0, // 本地版本号
-                            repo_version: parseFloat(p.version), // 线上版本号
+                            local_version: '0', // 本地版本号
+                            repo_version: p.version || '0', // 线上版本号
                             version_tag: `v${p.version}`,
                             version_tag_type: '',
                             author: p.author,

@@ -20,6 +20,7 @@ from .utils import load_xml, XMLPath, Setting, cherrypy_publish, SETTING_DIR
 
 logger = logging.getLogger("Protocol")
 logger.setLevel(logging.INFO)
+PLUGIN_DOWNLOAD_TIMEOUT = (5, 60)
 
 SERVICE_STATE_OBSERVED = {
     "AVTransport": ['TransportState',
@@ -883,15 +884,22 @@ class Handler:
         cherrypy.server.httpserver = _cpnative_server.CPHTTPServer(cherrypy.server)
 
     def __download_plugin(self, path, url):
+        download_succeeded = False
         try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            response = requests.get(url, timeout=PLUGIN_DOWNLOAD_TIMEOUT)
+            response.raise_for_status()
             with open(path, 'wb') as f:
-                f.write(requests.get(url).content)
+                f.write(response.content)
+            download_succeeded = True
         except Exception as e:
             logger.error(f"download plugin error: {e}")
+            cherrypy.engine.publish('app_notify', 'ERROR', 'Plugin download failed')
         finally:
             self.__downloading = False
-            Setting.restart()
-            # cherrypy.engine.restart()
+            if download_succeeded:
+                Setting.restart()
+                # cherrypy.engine.restart()
 
     def GET(self, param=None, *args, **kwargs):
         if not Setting.is_service_running():
@@ -957,9 +965,11 @@ class Handler:
                     url = plugin.get('url', '')
                     plugin_name = url.split('/')[-1]
                     local_path = os.path.join(SETTING_DIR, plugin.get('type', 'renderer'), plugin_name)
-                    threading.Thread(target=self.__download_plugin(local_path, url),
+                    threading.Thread(target=self.__download_plugin,
+                                     args=(local_path, url),
                                      daemon=True).start()
                 except Exception as e:
+                    self.__downloading = False
                     res['code'] = 1
                     res['message'] = 'json format error'
         else:

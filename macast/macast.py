@@ -23,6 +23,14 @@ from macast_renderer.mpv import MPVRenderer
 logger = logging.getLogger("main")
 logger.setLevel(logging.DEBUG)
 _ = gettext.gettext
+GITHUB_API_TIMEOUT = 5
+
+
+def version_key(value):
+    parts = re.findall(r'\d+', str(value))
+    if not parts:
+        return (0,)
+    return tuple(int(part) for part in parts)
 
 
 class MacastPlugin:
@@ -347,13 +355,15 @@ class Macast(App):
         release_url = 'https://github.com/xfangfang/Macast/releases/latest'
         api_url = 'https://api.github.com/repos/xfangfang/Macast/releases/latest'
         try:
-            res = json.loads(requests.get(api_url).text)
-            online_version = re.findall(r'(\d+\.*\d+)', res['tag_name'])[0]
+            response = requests.get(api_url, timeout=GITHUB_API_TIMEOUT)
+            response.raise_for_status()
+            res = response.json()
+            tag_name = res.get('tag_name', '')
 
-            logger.info("tag_name: {}".format(res['tag_name']))
+            logger.info("tag_name: %s", tag_name)
 
-            if float(Setting.get_version()) < float(online_version):
-                self.dialog(_("Macast New Update {}").format(res['tag_name']),
+            if version_key(Setting.get_version()) < version_key(tag_name):
+                self.dialog(_("Macast New Update {}").format(tag_name),
                             lambda: self.open_browser(release_url),
                             ok="Update")
             else:

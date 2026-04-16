@@ -6,6 +6,8 @@ We use **rumps** and **py2app** on MacOS which have better performance and small
 
 ## Development under MacOS
 
+Python 3.10+ is recommended for all platforms.
+
 ### 1. download mpv
 
 ```shell
@@ -16,16 +18,15 @@ mkdir -p bin && tar --strip-components 2 -C bin -xzvf mpv-latest.tar.gz mpv.app/
 ### 2. debug
 
 ```shell
-pip install -r requirements/darwin.txt
-python Macast.py
+python3 -m pip install -r requirements/darwin.txt
+python3 Macast.py
 ```
 
 ### 3. package
 
 ```shell
-pip install py2app
-pip install setuptools==44.0.0 # try this if you cannot run Macast.app
-python setup.py py2app
+python3 -m pip install py2app
+python3 setup.py py2app
 cp -R bin dist/Macast.app/Contents/Resources/
 open dist
 ```
@@ -44,7 +45,7 @@ $client.DownloadFile('https://nchc.dl.sourceforge.net/project/mpv-player-windows
 ### 2. debug
 
 ```powershell
-pip install -r requirements/common.txt
+python -m pip install -r requirements/common.txt
 python Macast.py
 ```
 
@@ -67,8 +68,8 @@ sudo apt install mpv
 ### 2. debug
 
 ```shell
-pip install -r requirements/common.txt
-python Macast.py
+python3 -m pip install -r requirements/common.txt
+python3 Macast.py
 # if there is something wrong, try this:
 export PYSTRAY_BACKEND=gtk && python3 Macast.py
 ```
